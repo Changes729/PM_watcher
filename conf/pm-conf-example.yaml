@@ -1,0 +1,13 @@
+ip-device:
+  device_1:
+    ip: 192.168.1.1
+    tags: core,datacenter
+    multi-power: 60
+  device_2:
+    ip: 192.168.1.123
+    tags: core
+    multi-power: 30
+  device_3:
+    ip: 192.168.2.1
+    tags: edge
+    multi-power: 20

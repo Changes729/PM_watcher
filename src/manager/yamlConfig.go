@@ -6,7 +6,7 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-var FILE_NAME = "pm-conf.yaml"
+const _FILE_NAME = "pm-conf.yaml"
 
 type IPDevice struct {
 	IP         string `yaml:"ip"`
@@ -14,26 +14,38 @@ type IPDevice struct {
 	MultiPower int    `yaml:"multi-power"`
 }
 
-type IPDeviceConfig struct {
+type YamlConfig struct {
 	IPDevice map[string]IPDevice `yaml:"ip-device"`
 }
 
-/** File Operations */
-func ReadConfig() (*IPDeviceConfig, error) {
-	var config IPDeviceConfig
+var YamlInfo YamlConfig
 
-	_string, err := os.ReadFile(FILE_NAME)
+func YamlInit() {
+	ReadConfig(&YamlInfo)
+}
+
+func YamlIPDevices() (devices []string) {
+	for _, deviceInfo := range YamlInfo.IPDevice {
+		devices = append(devices, deviceInfo.IP)
+	}
+
+	return
+}
+
+/** File Operations */
+func ReadConfig(config *YamlConfig) (err error) {
+	_string, err := os.ReadFile(_FILE_NAME)
 	if err == nil {
 		err = yaml.Unmarshal(_string, &config)
 	}
 
-	return &config, nil
+	return
 }
 
-func SaveConfig(config *IPDeviceConfig) (err error) {
+func SaveConfig(config *YamlConfig) (err error) {
 	_string, err := yaml.Marshal(config)
 	if err == nil {
-		err = os.WriteFile(FILE_NAME, _string, 0644)
+		err = os.WriteFile(_FILE_NAME, _string, 0644)
 	}
 
 	return

@@ -67,12 +67,14 @@ func InitMeterConnector(IParray []string) {
 		go newMeter.Run()
 	}
 
-	for _, meter := range _meterList {
-		select {
-		case pack := <-meter._ch:
-			processPack(pack)
-		default:
-			// noting todo now.
+	for {
+		for _, meter := range _meterList {
+			select {
+			case pack := <-meter._ch:
+				processPack(pack)
+			default:
+				// noting todo now.
+			}
 		}
 	}
 }

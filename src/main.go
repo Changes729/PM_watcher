@@ -2,6 +2,8 @@ package main
 
 import (
 	"main/src/api"
+	"main/src/delegate"
+	"main/src/manager"
 	"net/http"
 	"os"
 
@@ -11,8 +13,11 @@ import (
 func main() {
 	r := mux.NewRouter()
 
-	// TODO: init config
-	// TODO: init tcp and db
+	manager.InitDB()
+	manager.YamlInit()
+
+	delegate.InitMeterConnector(manager.YamlIPDevices())
+
 	api.DeviceSubRouter(r.PathPrefix("/api/").Subrouter())
 
 	web := http.FileServer(http.Dir("./web/"))

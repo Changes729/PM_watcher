@@ -6,23 +6,16 @@ import (
 	"encoding/hex"
 	"log"
 	"main/src/manager"
-	"math/big"
 	"net"
 	"strconv"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 const (
 	_CH_ERROR = iota
 	_CH_DATA  = iota
-)
-
-const (
-	_DB_BUCKET = "power"
-	_DB_ORG    = "KaYo"
 )
 
 type _meterThreadData struct {
@@ -40,12 +33,10 @@ type ElectricityMeter struct {
 }
 
 var _meterList = []ElectricityMeter{}
-var _writeAPI api.WriteAPIBlocking = nil
 
 func InitMeterConnector(IParray []string) {
-	_writeAPI = manager.InfluxClient.WriteAPIBlocking(_DB_ORG, _DB_BUCKET)
-
 	for _, ip := range IParray {
+		log.Printf("load ip device: %v", ip)
 		newMeter := ElectricityMeter{
 			IP:   net.IPAddr{IP: net.ParseIP(ip)},
 			Port: 10899,
@@ -59,6 +50,7 @@ func InitMeterConnector(IParray []string) {
 		dialAddress := ip + ":" + strconv.Itoa(newMeter.Port)
 		conn, err := net.Dial("tcp", dialAddress)
 		if err != nil {
+			// FIXME: use log manager. like log.debug etc.
 			log.Printf("device %s tcp connect failed: %v", newMeter.IP.String(), err)
 			continue
 		}
@@ -67,48 +59,70 @@ func InitMeterConnector(IParray []string) {
 		go newMeter.Run()
 	}
 
-	for _, meter := range _meterList {
-		select {
-		case pack := <-meter._ch:
-			processPack(pack)
-		default:
-			// noting todo now.
+	go func() {
+		for {
+			for _, meter := range _meterList {
+				select {
+				case pack := <-meter._ch:
+					log.Printf("Receive pack: %v", pack)
+					processPack(pack)
+				default:
+					// noting todo now.
+				}
+			}
 		}
-	}
+	}()
 }
 
 func (e *ElectricityMeter) Run() {
 	pack := _meterThreadData{c: _CH_ERROR}
+	buffer := make([]byte, 0, 1024)
+	tmp := make([]byte, 256)
+	var err error
 
 	/** Get Device ID */
-	buffer := make([]byte, 1024)
+	log.Printf("Get Device %v ID", e.IP.String())
 	e._conn.Write(manager.GenCommand(manager.EMPTY_ADDRESS, manager.CC_GET_IP, []byte{}))
-	n, err := e._conn.Read(buffer)
-	if err != nil {
-		log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err)
-	} else if e._id, err = manager.MarshalDeviceAddress(buffer[:n]); err != nil {
-		log.Printf("device %s command %v process failed: %v", e.IP.String(), manager.CC_GET_IP, err)
+	for isIntegrity, _ := manager.CheckPackIntegrity(buffer); isIntegrity == false; {
+		n, err := e._conn.Read(tmp)
+		if err != nil {
+			break
+		}
+
+		buffer = append(buffer, tmp[:n]...)
+		isIntegrity, _ = manager.CheckPackIntegrity(buffer)
 	}
 
-	for range time.Tick(time.Second * 20) {
+	if err != nil {
+		log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err)
+	} else if e._id, err = manager.MarshalDeviceAddress(buffer); err != nil {
+		log.Printf("device %s command %v process failed: %v", e.IP.String(), manager.CC_GET_IP, err)
+	} else {
+		log.Printf("device address: %v", e._id)
+	}
+
+	for range time.Tick(time.Second * time.Duration(manager.YamlInfo.Frequency.IntervalPower)) {
 		if e._id == manager.EMPTY_ADDRESS {
 			break
 		}
 
 		e._conn.Write(manager.GenCommand(e._id, manager.CC_GET_DATA, manager.FC_COMBINED_ENERGY))
-		if n, err := e._conn.Read(buffer); err != nil {
-			log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_DATA, err)
-		} else if pack.d, err = manager.MarshalData(buffer[:n]); err != nil {
-			log.Printf("device %s command %v process failed: %v", e.IP.String(), manager.CC_GET_DATA, err)
-		} else {
-			pack.c = _CH_DATA
-			e._ch <- pack
+		log.Printf("Get Device %v energy", e.IP.String())
+
+		buffer = nil
+		for isIntegrity, _ := manager.CheckPackIntegrity(buffer); isIntegrity == false; {
+			n, err := e._conn.Read(tmp)
+			if err != nil {
+				break
+			}
+
+			buffer = append(buffer, tmp[:n]...)
+			isIntegrity, _ = manager.CheckPackIntegrity(buffer)
 		}
 
-		e._conn.Write(manager.GenCommand(e._id, manager.CC_GET_DATA, manager.FC_NEUTRAL_LINE_CURRENT))
-		if n, err := e._conn.Read(buffer); err != nil {
+		if err != nil {
 			log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_DATA, err)
-		} else if pack.d, err = manager.MarshalData(buffer[:n]); err != nil {
+		} else if pack.d, err = manager.MarshalData(buffer); err != nil {
 			log.Printf("device %s command %v process failed: %v", e.IP.String(), manager.CC_GET_DATA, err)
 		} else {
 			pack.c = _CH_DATA
@@ -126,9 +140,9 @@ func processPack(pack _meterThreadData) {
 
 func processDLT(data manager.DLT_645_2007) {
 	switch data.ControlCode {
-	case manager.RC_GET_DATA:
-	case manager.RC_GET_DATA_N:
-	case manager.RC_GET_DATA_E:
+	case manager.RC_GET_DATA,
+		manager.RC_GET_DATA_N,
+		manager.RC_GET_DATA_E:
 		processDLTGetData(data)
 	}
 }
@@ -138,19 +152,22 @@ func processDLTGetData(data manager.DLT_645_2007) {
 	var N []byte
 
 	switch data.ControlCode {
-	case manager.RC_GET_DATA:
-	case manager.RC_GET_DATA_N:
+	case manager.RC_GET_DATA,
+		manager.RC_GET_DATA_N:
 		D = data.Data[:4]
 		N = data.Data[4:]
+		log.Printf("Delegate: %X, %X", D, N)
 	case manager.RC_GET_DATA_E:
 		log.Printf("err code: %v", data.Data)
 		return
 	}
 
 	if bytes.Equal(D, manager.FC_COMBINED_ENERGY) {
-		bigHex := new(big.Int).SetBytes(N)
+		bigHex := hex.EncodeToString(manager.ReverseArray(N))
+		log.Printf("power raw: %v", bigHex)
 		id := hex.EncodeToString(manager.ReverseArray(data.ID))
-		power := float32(bigHex.Int64()) / 100.0
+		power_raw, _ := strconv.Atoi(bigHex)
+		power := float32(power_raw) / 100.0
 		tags := map[string]string{
 			"source": "meter",
 		}
@@ -158,11 +175,11 @@ func processDLTGetData(data manager.DLT_645_2007) {
 			"combined_power": power,
 		}
 		p := influxdb2.NewPoint(id, tags, data, time.Now())
-		err := _writeAPI.WritePoint(context.Background(), p)
+		err := manager.WriteAPI.WritePoint(context.Background(), p)
+		log.Printf("DB write data %f", power)
 		if err != nil {
 			log.Printf("DB write data %v failed: %v", data, err)
 		}
 	} else if bytes.Equal(D, manager.FC_NEUTRAL_LINE_CURRENT) {
-
 	}
 }

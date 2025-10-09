@@ -85,6 +85,7 @@ func GenCommand(address string, control_code uint8, data []byte) (cmd []byte) {
 }
 
 func _MarshalPackage(bytes []byte) (data DLT_645_2007, err error) {
+	log.Printf("Marshal packages: %X", bytes)
 	WEAKUP_BYTE := byte(0xFE)
 	err = errors.New("No valid package found")
 
@@ -92,7 +93,7 @@ func _MarshalPackage(bytes []byte) (data DLT_645_2007, err error) {
 		if b != WEAKUP_BYTE {
 			if bytes[i] == byte(_START_BYTE) && bytes[len(bytes)-1] == byte(_END_BYTE) {
 				sum := 0
-				for _, d := range bytes[0 : len(bytes)-2] {
+				for _, d := range bytes[i : len(bytes)-2] {
 					sum += int(d)
 				}
 
@@ -102,14 +103,18 @@ func _MarshalPackage(bytes []byte) (data DLT_645_2007, err error) {
 				}
 
 				data = DLT_645_2007{
-					ID:          bytes[i : i+6],
+					ID:          bytes[i+1 : i+1+6],
 					ControlCode: bytes[i+8],
 					DataLength:  bytes[i+9],
 					Data:        bytes[i+10 : i+10+int(bytes[i+9])],
 				}
+
+				for i, b := range data.Data {
+					data.Data[i] = b - _SENDER_PROCESS_BYTE
+				}
 				err = nil
 			} else {
-				err = errors.New("Package format error")
+				err = errors.New("Package not end")
 			}
 			break
 		}
@@ -136,7 +141,7 @@ func MarshalDeviceAddress(bytes []byte) (address string, err error) {
 	}
 
 	for i := 0; i < int(data.DataLength); i++ {
-		if data.Data[i]-_SENDER_PROCESS_BYTE != data.ID[i] {
+		if data.Data[i] != data.ID[i] {
 			err = errors.New("Data mismatch error")
 			return
 		}
@@ -148,5 +153,27 @@ func MarshalDeviceAddress(bytes []byte) (address string, err error) {
 
 func MarshalData(bytes []byte) (data DLT_645_2007, err error) {
 	data, err = _MarshalPackage(bytes)
+	return
+}
+
+func CheckPackIntegrity(bytes []byte) (integrity bool, beginIndex int) {
+	integrity = false
+	beginIndex = 0
+
+	for i, b := range bytes {
+		if b == byte(_START_BYTE) {
+			integrity =
+				len(bytes) >= i+9 &&
+					len(bytes) >= (i+9+2+int(bytes[i+9])) &&
+					bytes[i+7] == byte(_START_BYTE) &&
+					bytes[i+9+2+int(bytes[i+9])] == byte(_END_BYTE)
+		}
+
+		if integrity {
+			break
+		}
+	}
+
+	log.Printf("Receive: %X, Integrity: %v", bytes, integrity)
 	return
 }

@@ -22,8 +22,13 @@ type InfluxSettings struct {
 	org    string `yaml:"org"`
 }
 
+type Frequency struct {
+	IntervalPower int `yaml:"power"`
+}
+
 type YamlConfig struct {
-	InfluxSetting InfluxSettings      `yaml:"influxDB"`
+	Frequency     Frequency           `yaml:"frequency"`
+	influxSetting InfluxSettings      `yaml:"influxDB"`
 	IPDevice      map[string]IPDevice `yaml:"ip-device"`
 }
 
@@ -55,8 +60,14 @@ func ReadConfig() (YamlConfig, error) {
 	_string, err := os.ReadFile(_FILE_NAME)
 	if err == nil {
 		err = yaml.Unmarshal(_string, &config)
-	} else {
+	}
+
+	if err != nil {
 		log.Printf("Load file %s err: %v", _FILE_NAME, err)
+	} else {
+		if config.Frequency.IntervalPower == 0 {
+			config.Frequency.IntervalPower = 20
+		}
 	}
 
 	return config, err

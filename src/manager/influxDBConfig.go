@@ -10,8 +10,8 @@ var WriteAPI api.WriteAPIBlocking = nil
 
 func InitDB() {
 	InfluxClient = influxdb2.NewClient(
-		YamlInfo.InfluxSetting.url, YamlInfo.InfluxSetting.token)
+		YamlInfo.influxSetting.url, YamlInfo.influxSetting.token)
 
 	WriteAPI = InfluxClient.WriteAPIBlocking(
-		YamlInfo.InfluxSetting.org, YamlInfo.InfluxSetting.bucket)
+		YamlInfo.influxSetting.org, YamlInfo.influxSetting.bucket)
 }

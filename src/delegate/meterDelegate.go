@@ -101,7 +101,7 @@ func (e *ElectricityMeter) Run() {
 		log.Printf("device address: %v", e._id)
 	}
 
-	for range time.Tick(time.Second * 20) {
+	for range time.Tick(time.Second * time.Duration(manager.YamlInfo.Frequency.IntervalPower)) {
 		if e._id == manager.EMPTY_ADDRESS {
 			break
 		}

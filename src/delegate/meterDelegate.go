@@ -11,17 +11,11 @@ import (
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 const (
 	_CH_ERROR = iota
 	_CH_DATA  = iota
-)
-
-const (
-	_DB_BUCKET = "power"
-	_DB_ORG    = "CaYo"
 )
 
 type _meterThreadData struct {
@@ -39,11 +33,8 @@ type ElectricityMeter struct {
 }
 
 var _meterList = []ElectricityMeter{}
-var _writeAPI api.WriteAPIBlocking = nil
 
 func InitMeterConnector(IParray []string) {
-	_writeAPI = manager.InfluxClient.WriteAPIBlocking(_DB_ORG, _DB_BUCKET)
-
 	for _, ip := range IParray {
 		log.Printf("load ip device: %v", ip)
 		newMeter := ElectricityMeter{
@@ -184,7 +175,7 @@ func processDLTGetData(data manager.DLT_645_2007) {
 			"combined_power": power,
 		}
 		p := influxdb2.NewPoint(id, tags, data, time.Now())
-		err := _writeAPI.WritePoint(context.Background(), p)
+		err := manager.WriteAPI.WritePoint(context.Background(), p)
 		log.Printf("DB write data %f", power)
 		if err != nil {
 			log.Printf("DB write data %v failed: %v", data, err)

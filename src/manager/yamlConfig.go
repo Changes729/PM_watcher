@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"os"
 	"log"
+	"os"
 
 	"github.com/goccy/go-yaml"
 )
@@ -15,8 +15,16 @@ type IPDevice struct {
 	MultiPower int    `yaml:"multi-power"`
 }
 
+type InfluxSettings struct {
+	url    string `yaml:"url"`
+	token  string `yaml:"token"`
+	bucket string `yaml:"bucket"`
+	org    string `yaml:"org"`
+}
+
 type YamlConfig struct {
-	IPDevice map[string]IPDevice `yaml:"ip-device"`
+	InfluxSetting InfluxSettings      `yaml:"influxDB"`
+	IPDevice      map[string]IPDevice `yaml:"ip-device"`
 }
 
 var YamlInfo YamlConfig

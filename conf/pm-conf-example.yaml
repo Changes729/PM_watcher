@@ -1,3 +1,9 @@
+influxDB:
+  url: http://localhost:8086
+  token: aabbccdd
+  bucket: power
+  org: some_org
+
 ip-device:
   device_1:
     ip: 192.168.1.1

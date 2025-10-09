@@ -59,6 +59,7 @@ func InitMeterConnector(IParray []string) {
 		dialAddress := ip + ":" + strconv.Itoa(newMeter.Port)
 		conn, err := net.Dial("tcp", dialAddress)
 		if err != nil {
+			// FIXME: use log manager. like log.debug etc.
 			log.Printf("device %s tcp connect failed: %v", newMeter.IP.String(), err)
 			continue
 		}
@@ -151,8 +152,8 @@ func processPack(pack _meterThreadData) {
 func processDLT(data manager.DLT_645_2007) {
 	switch data.ControlCode {
 	case manager.RC_GET_DATA,
-			 manager.RC_GET_DATA_N,
-			 manager.RC_GET_DATA_E:
+		manager.RC_GET_DATA_N,
+		manager.RC_GET_DATA_E:
 		processDLTGetData(data)
 	}
 }
@@ -163,7 +164,7 @@ func processDLTGetData(data manager.DLT_645_2007) {
 
 	switch data.ControlCode {
 	case manager.RC_GET_DATA,
-			 manager.RC_GET_DATA_N:
+		manager.RC_GET_DATA_N:
 		D = data.Data[:4]
 		N = data.Data[4:]
 		log.Printf("Delegate: %X, %X", D, N)

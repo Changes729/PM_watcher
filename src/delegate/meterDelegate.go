@@ -100,7 +100,6 @@ func (e *ElectricityMeter) Run() {
 
 		buffer = append(buffer, tmp[:n]...)
 		isIntegrity, _ = manager.CheckPackIntegrity(buffer)
-		log.Printf("Receive: %X, Integrity: %v", buffer[:len(buffer)], isIntegrity)
 	}
 
 	if err != nil {
@@ -128,7 +127,6 @@ func (e *ElectricityMeter) Run() {
 
 			buffer = append(buffer, tmp[:n]...)
 			isIntegrity, _ = manager.CheckPackIntegrity(buffer)
-			log.Printf("Receive: %X, Integrity: %v", buffer[:len(buffer)], isIntegrity)
 		}
 
 		if err != nil {

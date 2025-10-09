@@ -160,15 +160,13 @@ func CheckPackIntegrity(bytes []byte) (integrity bool, beginIndex int) {
 	integrity = false
 	beginIndex = 0
 
-	// WEAKUP_BYTE := byte(0xFE)
-
 	for i, b := range bytes {
 		if b == byte(_START_BYTE) {
 			integrity =
-				len(bytes) >= i + 9 &&
-				len(bytes) >= (i + 9 + 2 + int(bytes[i + 9])) &&
-				bytes[i + 7] == byte(_START_BYTE) &&
-				bytes[i + 9 + 2 + int(bytes[i + 9])] == byte(_END_BYTE)
+				len(bytes) >= i+9 &&
+					len(bytes) >= (i+9+2+int(bytes[i+9])) &&
+					bytes[i+7] == byte(_START_BYTE) &&
+					bytes[i+9+2+int(bytes[i+9])] == byte(_END_BYTE)
 		}
 
 		if integrity {
@@ -176,5 +174,6 @@ func CheckPackIntegrity(bytes []byte) (integrity bool, beginIndex int) {
 		}
 	}
 
+	log.Printf("Receive: %X, Integrity: %v", bytes, integrity)
 	return
 }

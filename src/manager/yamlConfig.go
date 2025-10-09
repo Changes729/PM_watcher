@@ -2,11 +2,12 @@ package manager
 
 import (
 	"os"
+	"log"
 
 	"github.com/goccy/go-yaml"
 )
 
-const _FILE_NAME = "pm-conf.yaml"
+const _FILE_NAME = "./pm-conf.yaml"
 
 type IPDevice struct {
 	IP         string `yaml:"ip"`
@@ -21,7 +22,12 @@ type YamlConfig struct {
 var YamlInfo YamlConfig
 
 func YamlInit() {
-	ReadConfig(&YamlInfo)
+	info, err := ReadConfig()
+	if err != nil {
+		log.Printf("Read config failed: %v", err)
+	} else {
+		YamlInfo = info
+	}
 }
 
 func YamlIPDevices() (devices []string) {
@@ -29,20 +35,26 @@ func YamlIPDevices() (devices []string) {
 		devices = append(devices, deviceInfo.IP)
 	}
 
+	log.Printf("Devices: %v", devices)
+
 	return
 }
 
 /** File Operations */
-func ReadConfig(config *YamlConfig) (err error) {
+func ReadConfig() (YamlConfig, error) {
+	var config YamlConfig
+	var err error
 	_string, err := os.ReadFile(_FILE_NAME)
 	if err == nil {
 		err = yaml.Unmarshal(_string, &config)
+	} else {
+		log.Printf("Load file %s err: %v", _FILE_NAME, err)
 	}
 
-	return
+	return config, err
 }
 
-func SaveConfig(config *YamlConfig) (err error) {
+func SaveConfig(config YamlConfig) (err error) {
 	_string, err := yaml.Marshal(config)
 	if err == nil {
 		err = os.WriteFile(_FILE_NAME, _string, 0644)

@@ -10,7 +10,7 @@ RUN GOPROXY=https://mirrors.aliyun.com/goproxy/,direct go mod download
 
 COPY src/*.go ./
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /alluvial
+RUN CGO_ENABLED=0 GOOS=linux go build -o /PowerWatcher
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage
@@ -21,10 +21,10 @@ FROM gcr.io/distroless/base-debian11 AS build-release-stage
 
 WORKDIR /
 
-COPY --from=build-stage /alluvial /alluvial
+COPY --from=build-stage /PowerWatcher /PowerWatcher
 
-EXPOSE 20080
+EXPOSE 8080
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/alluvial"]
+ENTRYPOINT ["/PowerWatcher"]

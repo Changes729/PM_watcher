@@ -1,5 +1,0 @@
-ip-device:
-  device_1:
-    ip: 192.168.10.80
-    tags: core,datacenter
-    multi-power: 60

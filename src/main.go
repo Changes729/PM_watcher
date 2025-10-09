@@ -13,12 +13,13 @@ import (
 func main() {
 	r := mux.NewRouter()
 
-	manager.InitDB()
 	manager.YamlInit()
+	manager.InitDB()
 
 	delegate.InitMeterConnector(manager.YamlIPDevices())
 
 	api.DeviceSubRouter(r.PathPrefix("/api/").Subrouter())
+	api.PowerSubRouter(r.PathPrefix("/api/").Subrouter())
 
 	web := http.FileServer(http.Dir("./web/"))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

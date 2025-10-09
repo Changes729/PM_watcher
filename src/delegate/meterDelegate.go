@@ -48,7 +48,8 @@ func InitMeterConnector(IParray []string) {
 
 		/** connection will be closed on run method. */
 		dialAddress := ip + ":" + strconv.Itoa(newMeter.Port)
-		conn, err := net.Dial("tcp", dialAddress)
+		dial := net.Dialer{Timeout: time.Second * 1}
+		conn, err := dial.Dial("tcp", dialAddress)
 		if err != nil {
 			// FIXME: use log manager. like log.debug etc.
 			log.Printf("device %s tcp connect failed: %v", newMeter.IP.String(), err)
@@ -72,6 +73,24 @@ func InitMeterConnector(IParray []string) {
 			}
 		}
 	}()
+}
+
+func DevicesID() (ids []string) {
+	for _, meter := range _meterList {
+		ids = append(ids, meter._id)
+	}
+
+	return
+}
+
+func DeviceID(ip string) (id string) {
+	for _, meter := range _meterList {
+		if ip == meter.IP.String() {
+			id = meter._id
+		}
+	}
+
+	return
 }
 
 func (e *ElectricityMeter) Run() {

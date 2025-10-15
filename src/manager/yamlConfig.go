@@ -16,10 +16,10 @@ type IPDevice struct {
 }
 
 type InfluxSettings struct {
-	url    string `yaml:"url"`
-	token  string `yaml:"token"`
-	bucket string `yaml:"bucket"`
-	org    string `yaml:"org"`
+	Url    string `yaml:"url"`
+	Token  string `yaml:"token"`
+	Bucket string `yaml:"bucket"`
+	Org    string `yaml:"org"`
 }
 
 type Frequency struct {
@@ -28,7 +28,7 @@ type Frequency struct {
 
 type YamlConfig struct {
 	Frequency     Frequency           `yaml:"frequency"`
-	influxSetting InfluxSettings      `yaml:"influxDB"`
+	InfluxSetting InfluxSettings      `yaml:"influxDB"`
 	IPDevice      map[string]IPDevice `yaml:"ip-device"`
 }
 
@@ -40,6 +40,7 @@ func YamlInit() {
 		log.Printf("Read config failed: %v", err)
 	} else {
 		YamlInfo = info
+		log.Printf("Read config: %v", info)
 	}
 }
 

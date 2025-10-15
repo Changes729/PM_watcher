@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  alluvial:
+    container_name: pm_watcher
+    restart: unless-stopped
+    stop_grace_period: 30s
+    # image: alluvial:multistage
+    image: ghcr.io/changes729/pm_watcher:latest
+    volumes:
+      - ./pm-conf.yaml:/pm-conf.yaml
+    ports:
+      - "8080:8080"

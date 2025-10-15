@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1
 
 # Build the application from source
-FROM golang:1.19 AS build-stage
+FROM golang:1.24 AS build-stage
 
+ADD . /app
 WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN GOPROXY=https://mirrors.aliyun.com/goproxy/,direct go mod download
+RUN GOPROXY=https://mirrors.aliyun.com/goproxy/,direct go get -u all
 
-COPY src/*.go ./
-
-RUN CGO_ENABLED=0 GOOS=linux go build -o /PowerWatcher
+RUN CGO_ENABLED=0 GOOS=linux go build -C ./src -o /PowerWatcher
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage

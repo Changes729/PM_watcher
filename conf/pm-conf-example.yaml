@@ -1,4 +1,4 @@
-influxSetting:
+influxDB:
   url: http://localhost:8086
   token: aabbccdd
   bucket: power

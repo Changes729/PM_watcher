@@ -8,6 +8,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build and push the image
         run : |
-          docker login --username changes729 --password ${{ secrets.GH_PAT }} ghcr.io
-          docker build . --tag ghcr.io/changes729/PMWatcher:latest
-          docker push ghcr.io/changes729/PMWatcher:latest
+          echo ${{ secrets.docker }} | docker login --username changes729 --password-stdin ghcr.io
+          docker build . --tag ghcr.io/changes729/pm_watcher:latest
+          docker push ghcr.io/changes729/pm_watcher:latest

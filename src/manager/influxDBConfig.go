@@ -3,7 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
@@ -28,6 +28,6 @@ func QueryBucket(cmd string) (*api.QueryTableResult, error) {
 	from(bucket: "%s") %s
 	`, YamlInfo.InfluxSetting.Bucket, cmd)
 
-	log.Printf("bucket: %s db cmd: %s", YamlInfo.InfluxSetting.Bucket, fullCmd)
+	slog.Debug(fmt.Sprintf("bucket: %s db cmd: %s", YamlInfo.InfluxSetting.Bucket, fullCmd))
 	return queryAPI.Query(context.Background(), fullCmd)
 }

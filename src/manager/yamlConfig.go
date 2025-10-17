@@ -1,7 +1,8 @@
 package manager
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/goccy/go-yaml"
@@ -37,10 +38,10 @@ var YamlInfo YamlConfig
 func YamlInit() {
 	info, err := ReadConfig()
 	if err != nil {
-		log.Printf("Read config failed: %v", err)
+		slog.Error(fmt.Sprintf("Read config failed: %v", err))
 	} else {
 		YamlInfo = info
-		log.Printf("Read config: %v", info)
+		slog.Debug(fmt.Sprintf("Read config: %v", info))
 	}
 }
 
@@ -49,7 +50,7 @@ func YamlIPDevices() (devices []string) {
 		devices = append(devices, deviceInfo.IP)
 	}
 
-	log.Printf("Devices: %v", devices)
+	slog.Debug(fmt.Sprintf("Devices: %v", devices))
 
 	return
 }
@@ -64,7 +65,7 @@ func ReadConfig() (YamlConfig, error) {
 	}
 
 	if err != nil {
-		log.Printf("Load file %s err: %v", _FILE_NAME, err)
+		slog.Error(fmt.Sprintf("Load file %s err: %v", _FILE_NAME, err))
 	} else {
 		if config.Frequency.IntervalPower == 0 {
 			config.Frequency.IntervalPower = 20

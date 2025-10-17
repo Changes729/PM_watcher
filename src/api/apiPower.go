@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"main/src/delegate"
 	"main/src/manager"
 	"net/http"
@@ -46,9 +46,9 @@ func _CombinedEnergy() (data []dUnit) {
 		|> first()`, "electronic_power")
 		result, err := manager.QueryBucket(formattedCmd)
 		if err != nil {
-			log.Printf("Request data failed: %v", err)
+			slog.Error(fmt.Sprintf("Request data failed: %v", err))
 		} else if result.Err() != nil {
-			log.Printf("query parsing error: %s\n", result.Err().Error())
+			slog.Error(fmt.Sprintf("query parsing error: %s\n", result.Err().Error()))
 		} else {
 			// Iterate over query response
 			for result.Next() {
@@ -64,7 +64,7 @@ func _CombinedEnergy() (data []dUnit) {
 		}
 	}
 
-	log.Printf("data: %v", data)
+	slog.Debug(fmt.Sprintf("data: %v", data))
 	return data
 }
 

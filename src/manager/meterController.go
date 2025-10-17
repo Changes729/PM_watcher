@@ -3,7 +3,9 @@ package manager
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
+	"log/slog"
 )
 
 type DLT_645_2007 struct {
@@ -85,7 +87,7 @@ func GenCommand(address string, control_code uint8, data []byte) (cmd []byte) {
 }
 
 func _MarshalPackage(bytes []byte) (data DLT_645_2007, err error) {
-	log.Printf("Marshal packages: %X", bytes)
+	slog.Debug(fmt.Sprintf("Marshal packages: %X", bytes))
 	WEAKUP_BYTE := byte(0xFE)
 	err = errors.New("No valid package found")
 
@@ -174,6 +176,6 @@ func CheckPackIntegrity(bytes []byte) (integrity bool, beginIndex int) {
 		}
 	}
 
-	log.Printf("Receive: %X, Integrity: %v", bytes, integrity)
+	slog.Debug(fmt.Sprintf("Receive: %X, Integrity: %v", bytes, integrity))
 	return
 }

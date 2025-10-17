@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"main/src/api"
 	"main/src/delegate"
 	"main/src/manager"
@@ -11,6 +12,11 @@ import (
 )
 
 func main() {
+	var programLevel = new(slog.LevelVar)
+	programLevel.Set(slog.LevelDebug)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel}))
+	slog.SetDefault(logger)
+
 	r := mux.NewRouter()
 
 	manager.YamlInit()

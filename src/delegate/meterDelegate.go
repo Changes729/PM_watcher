@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	_CH_ERROR = iota
+	_CH_ERROR = iota /* quit */
 	_CH_DATA  = iota
 )
 
@@ -48,17 +48,7 @@ func InitMeterConnector(IParray []string) {
 		_meterList = append(_meterList, newMeter)
 
 		/** connection will be closed on run method. */
-		dialAddress := ip + ":" + strconv.Itoa(newMeter.Port)
-		dial := net.Dialer{Timeout: time.Second * 1}
-		conn, err := dial.Dial("tcp", dialAddress)
-		if err != nil {
-			// FIXME: use log manager. like log.debug etc.
-			slog.Error(fmt.Sprintf("device %s tcp connect failed: %v", newMeter.IP.String(), err))
-			continue
-		}
-
-		newMeter._conn = conn
-		go newMeter.Run()
+		newMeter.InitAndRun()
 	}
 
 	go func() {
@@ -67,13 +57,22 @@ func InitMeterConnector(IParray []string) {
 				select {
 				case pack := <-meter._ch:
 					slog.Debug(fmt.Sprintf("Receive pack: %v", pack))
-					processPack(pack)
+					meter.processPack(pack)
 				default:
-					// noting todo now.
+					if meter._conn == nil {
+						meter.InitAndRun()
+					}
 				}
 			}
 		}
 	}()
+}
+
+func _TCPDial(e ElectricityMeter) (net.Conn, error) {
+	ip := e.IP.String()
+	dialAddress := ip + ":" + strconv.Itoa(e.Port)
+	dial := net.Dialer{Timeout: time.Second * 1}
+	return dial.Dial("tcp", dialAddress)
 }
 
 func DevicesID() (ids []string) {
@@ -94,6 +93,21 @@ func DeviceID(ip string) (id string) {
 	return
 }
 
+func (e *ElectricityMeter) InitAndRun() (err error) {
+	if e._conn == nil {
+		conn, err := _TCPDial(*e)
+		if err != nil {
+			slog.Error(fmt.Sprintf("device %s tcp connect failed: %v", e.IP.String(), err))
+		} else {
+			e._conn = conn
+			go e.Run()
+		}
+	}
+
+	return
+}
+
+/** this is an thread method */
 func (e *ElectricityMeter) Run() {
 	pack := _meterThreadData{c: _CH_ERROR}
 	buffer := make([]byte, 0, 1024)
@@ -107,6 +121,8 @@ func (e *ElectricityMeter) Run() {
 		n, err := e._conn.Read(tmp)
 		if err != nil {
 			slog.Error(fmt.Sprintf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err))
+			pack.c = _CH_ERROR
+			e._ch <- pack
 			break
 		}
 
@@ -122,6 +138,9 @@ func (e *ElectricityMeter) Run() {
 
 	for range time.Tick(time.Second * time.Duration(manager.YamlInfo.Frequency.IntervalPower)) {
 		if e._id == manager.EMPTY_ADDRESS {
+			slog.Error(fmt.Sprintf("device %s cannot get ID", e.IP.String()))
+			pack.c = _CH_ERROR
+			e._ch <- pack
 			break
 		}
 
@@ -132,6 +151,9 @@ func (e *ElectricityMeter) Run() {
 		for isIntegrity, _ := manager.CheckPackIntegrity(buffer); isIntegrity == false; {
 			n, err := e._conn.Read(tmp)
 			if err != nil {
+				slog.Error(fmt.Sprintf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err))
+				pack.c = _CH_ERROR
+				e._ch <- pack
 				break
 			}
 
@@ -150,23 +172,26 @@ func (e *ElectricityMeter) Run() {
 	}
 }
 
-func processPack(pack _meterThreadData) {
+func (e *ElectricityMeter) processPack(pack _meterThreadData) {
 	switch pack.c {
 	case _CH_DATA:
-		processDLT(pack.d)
+		e.processDLT(pack.d)
+	case _CH_ERROR:
+		e._conn.Close()
+		e._conn = nil
 	}
 }
 
-func processDLT(data manager.DLT_645_2007) {
+func (e *ElectricityMeter) processDLT(data manager.DLT_645_2007) {
 	switch data.ControlCode {
 	case manager.RC_GET_DATA,
 		manager.RC_GET_DATA_N,
 		manager.RC_GET_DATA_E:
-		processDLTGetData(data)
+		e.processDLTGetData(data)
 	}
 }
 
-func processDLTGetData(data manager.DLT_645_2007) {
+func (e *ElectricityMeter) processDLTGetData(data manager.DLT_645_2007) {
 	var D []byte
 	var N []byte
 

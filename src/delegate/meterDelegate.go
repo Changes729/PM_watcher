@@ -105,6 +105,7 @@ func (e *ElectricityMeter) Run() {
 	for isIntegrity, _ := manager.CheckPackIntegrity(buffer); isIntegrity == false; {
 		n, err := e._conn.Read(tmp)
 		if err != nil {
+			log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err)
 			break
 		}
 
@@ -112,9 +113,7 @@ func (e *ElectricityMeter) Run() {
 		isIntegrity, _ = manager.CheckPackIntegrity(buffer)
 	}
 
-	if err != nil {
-		log.Printf("device %s command %v read failed: %v", e.IP.String(), manager.CC_GET_IP, err)
-	} else if e._id, err = manager.MarshalDeviceAddress(buffer); err != nil {
+	if e._id, err = manager.MarshalDeviceAddress(buffer); err != nil {
 		log.Printf("device %s command %v process failed: %v", e.IP.String(), manager.CC_GET_IP, err)
 	} else {
 		log.Printf("device address: %v", e._id)

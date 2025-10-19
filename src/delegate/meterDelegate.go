@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"main/src/manager"
+	"math"
 	"net"
 	"strconv"
 	"time"
@@ -31,6 +32,9 @@ type ElectricityMeter struct {
 	_id   string
 	_ch   chan _meterThreadData
 	_conn net.Conn
+
+	_last_connect  time.Time
+	_connect_times int
 }
 
 var _meterList = []ElectricityMeter{}
@@ -47,19 +51,21 @@ func InitMeterConnector(IParray []string) {
 		}
 		_meterList = append(_meterList, newMeter)
 
-		/** connection will be closed on run method. */
-		newMeter.InitAndRun()
 	}
 
 	go func() {
 		for {
-			for _, meter := range _meterList {
+			for i := range _meterList {
+				meter := &_meterList[i]
 				select {
 				case pack := <-meter._ch:
 					slog.Debug(fmt.Sprintf("Receive pack: %v", pack))
 					meter.processPack(pack)
 				default:
-					if meter._conn == nil {
+					if meter._conn == nil &&
+						meter._last_connect.Add(
+							time.Duration(meter._connect_times*10)*time.Second).Before(time.Now()) {
+						slog.Info(fmt.Sprintf("Reconnect device %s", meter.IP.String()))
 						meter.InitAndRun()
 					}
 				}
@@ -96,10 +102,14 @@ func DeviceID(ip string) (id string) {
 func (e *ElectricityMeter) InitAndRun() (err error) {
 	if e._conn == nil {
 		conn, err := _TCPDial(*e)
+		e._last_connect = time.Now()
 		if err != nil {
 			slog.Error(fmt.Sprintf("device %s tcp connect failed: %v", e.IP.String(), err))
+			e._connect_times++
+			e._connect_times = int(math.Min(float64(e._connect_times), 6))
 		} else {
 			e._conn = conn
+			e._connect_times = 0
 			go e.Run()
 		}
 	}
@@ -147,7 +157,7 @@ func (e *ElectricityMeter) Run() {
 		e._conn.Write(manager.GenCommand(e._id, manager.CC_GET_DATA, manager.FC_COMBINED_ENERGY))
 		slog.Debug(fmt.Sprintf("Get Device %v energy", e.IP.String()))
 
-		buffer = nil
+		buffer = buffer[:0]
 		for isIntegrity, _ := manager.CheckPackIntegrity(buffer); isIntegrity == false; {
 			n, err := e._conn.Read(tmp)
 			if err != nil {
@@ -177,7 +187,9 @@ func (e *ElectricityMeter) processPack(pack _meterThreadData) {
 	case _CH_DATA:
 		e.processDLT(pack.d)
 	case _CH_ERROR:
-		e._conn.Close()
+		if e._conn != nil {
+			e._conn.Close()
+		}
 		e._conn = nil
 	}
 }

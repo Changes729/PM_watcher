@@ -87,6 +87,10 @@ func GenCommand(address string, control_code uint8, data []byte) (cmd []byte) {
 }
 
 func _MarshalPackage(bytes []byte) (data DLT_645_2007, err error) {
+	if bytes == nil {
+		return data, errors.New("Nil bytes")
+	}
+
 	slog.Debug(fmt.Sprintf("Marshal packages: %X", bytes))
 	WEAKUP_BYTE := byte(0xFE)
 	err = errors.New("No valid package found")
@@ -165,7 +169,7 @@ func CheckPackIntegrity(bytes []byte) (integrity bool, beginIndex int) {
 	for i, b := range bytes {
 		if b == byte(_START_BYTE) {
 			integrity =
-				len(bytes) >= i+9 &&
+				len(bytes) > i+9 &&
 					len(bytes) >= (i+9+2+int(bytes[i+9])) &&
 					bytes[i+7] == byte(_START_BYTE) &&
 					bytes[i+9+2+int(bytes[i+9])] == byte(_END_BYTE)

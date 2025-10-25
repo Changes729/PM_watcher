@@ -11,8 +11,9 @@ type DeviceData = {
 };
 
 export default function Homepage() {
-  const homePageDomRef = React.useRef<HTMLDivElement>(null);
+  const tableBodyRef = React.useRef<HTMLTableSectionElement>(null);
   const headerCheckboxRef = React.useRef<HTMLInputElement>(null);
+  const downloadButtonRef = React.useRef<HTMLButtonElement>(null);
   const { t } = useTranslation();
   const csvColumns = [
     t("device-name"),
@@ -27,7 +28,7 @@ export default function Homepage() {
     updateData();
     const interval = setInterval(() => {
       updateData();
-    }, 20000); // Update every 5 seconds
+    }, 20000);
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
@@ -44,18 +45,28 @@ export default function Homepage() {
   }
 
   function handleDownload() {
-    const csvString = [
-      csvColumns,
-      ...csvDatas.map((item) => [
-        item.Name,
-        item.Magnification,
-        item.Watt,
-        item.Watt * item.Magnification,
-        item.LatestUpdate,
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+    const checkboxes = tableBodyRef.current?.querySelectorAll(
+      'input[type="checkbox"]'
+    ) as NodeListOf<HTMLInputElement>;
+
+    const csvDataPatch = [csvColumns];
+    checkboxes.forEach((checkbox, index) => {
+      if (checkbox.checked) {
+        const device = csvDatas[index];
+        csvDataPatch.push([
+          device.Name,
+          device.Magnification.toString(),
+          device.Watt.toString(),
+          (device.Watt * device.Magnification).toString(),
+          new Date(Date.parse(device.LatestUpdate))
+            .toISOString()
+            .replace("T", " ")
+            .substring(0, 19),
+        ]);
+      }
+    });
+
+    const csvString = csvDataPatch.map((row) => row.join(",")).join("\n");
 
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
@@ -78,7 +89,7 @@ export default function Homepage() {
   }
 
   function handleCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const checkboxes = homePageDomRef.current?.querySelectorAll(
+    const checkboxes = tableBodyRef.current?.querySelectorAll(
       'input[type="checkbox"]'
     ) as NodeListOf<HTMLInputElement>;
     const isChecked = event.target.checked;
@@ -87,20 +98,25 @@ export default function Homepage() {
       checkboxes.forEach((checkbox) => {
         checkbox.checked = isChecked;
       });
-    } else {
-      const allChecked = Array.from(checkboxes).every((checkbox) => {
-        if (checkbox === headerCheckboxRef.current) return true;
-        else return checkbox.checked;
-      });
-      headerCheckboxRef.current!.checked = allChecked;
     }
+
+    const allChecked = Array.from(checkboxes).every((checkbox) => {
+      return checkbox.checked;
+    });
+    const allDischecked = Array.from(checkboxes).every((checkbox) => {
+      return !checkbox.checked;
+    });
+    headerCheckboxRef.current!.checked = allChecked;
+    downloadButtonRef.current!.disabled = allDischecked;
   }
 
   return (
-    <div ref={homePageDomRef}>
+    <>
       <img src="http://skinspath.acshoes.com/SkinsPath1/201708/7d2688a7-9550-415b-859b-408dd06b853c/Skins/zh-CN/Website/Images/logo.png"></img>
       <h1>{t("Digital-meter-reading-system")} </h1>
-      <button onClick={handleDownload}>{t("download")}</button>
+      <button onClick={handleDownload} ref={downloadButtonRef}>
+        {t("download")}
+      </button>
       <button>{t("edit-device-info")}</button>
       <table>
         <thead>
@@ -109,6 +125,7 @@ export default function Homepage() {
               <input
                 ref={headerCheckboxRef}
                 type="checkbox"
+                defaultChecked={true}
                 onChange={handleCheckboxChange}
               />
             </th>
@@ -119,11 +136,15 @@ export default function Homepage() {
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={tableBodyRef}>
           {csvDatas.map((device, index) => (
             <tr key={index}>
               <td>
-                <input type="checkbox" onChange={handleCheckboxChange} />
+                <input
+                  type="checkbox"
+                  defaultChecked={true}
+                  onChange={handleCheckboxChange}
+                />
               </td>
               <td>{device.Name}</td>
               <td>{device.Magnification}</td>
@@ -139,6 +160,6 @@ export default function Homepage() {
           ))}
         </tbody>
       </table>
-    </div>
+    </>
   );
 }

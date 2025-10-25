@@ -38,8 +38,7 @@ export default function Homepage() {
       method: "GET",
     }).then((res) => {
       res.json().then((data) => {
-        console.log(data);
-        setCsvDatas(data);
+        if (data != null) setCsvDatas(data);
       });
     });
   }
@@ -110,11 +109,17 @@ export default function Homepage() {
     downloadButtonRef.current!.disabled = allDischecked;
   }
 
+
+
   return (
     <>
       <img src="http://skinspath.acshoes.com/SkinsPath1/201708/7d2688a7-9550-415b-859b-408dd06b853c/Skins/zh-CN/Website/Images/logo.png"></img>
       <h1>{t("Digital-meter-reading-system")} </h1>
-      <button onClick={handleDownload} ref={downloadButtonRef}>
+      <button
+        onClick={handleDownload}
+        ref={downloadButtonRef}
+        disabled={csvDatas.length === 0}
+      >
         {t("download")}
       </button>
       <button>{t("edit-device-info")}</button>

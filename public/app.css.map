@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../app.scss"],
+  "sourcesContent": ["table {\n  border-collapse: collapse;\n  border: 2px solid rgb(140 140 140);\n  font-family: sans-serif;\n  font-size: 0.8rem;\n  letter-spacing: 1px;\n}\n\ncaption {\n  caption-side: bottom;\n  padding: 10px;\n  font-weight: bold;\n}\n\nthead,\ntfoot {\n  background-color: rgb(228 240 245);\n}\n\nth,\ntd {\n  border: 1px solid rgb(160 160 160);\n  padding: 8px 10px;\n}\n\ntd:last-of-type {\n  text-align: center;\n}\n\ntbody > tr:nth-of-type(even) {\n  background-color: rgb(237 238 242);\n}\n\ntfoot th {\n  text-align: right;\n}\n\ntfoot td {\n  font-weight: bold;\n}\n"],
+  "mappings": "AAAA,MACE,gBAAA,SACA,OAAA,IAAA,MAAA,IAAA,GAAA,CAAA,GAAA,CAAA,KACA,YAAA,WACA,UAAA,MACA,eAAA,IAGF,QACE,aAAA,OATF,QAUE,KACA,YAAA,IAGF,MAAA,MAEE,iBAAA,QAGF,GAAA,GAEE,OAAA,IAAA,MAAA,IAAA,GAAA,CAAA,GAAA,CAAA,KArBF,QAsBE,IAAA,KAGF,EAAA,cACE,WAAA,OAGF,KAAA,CAAA,EAAA,iBACE,iBAAA,QAGF,MAAA,GACE,WAAA,MAGF,MAAA,GACE,YAAA",
+  "names": []
+}

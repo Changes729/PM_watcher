@@ -1,0 +1,15 @@
+{
+  "device-name": "设备名称",
+  "equipment-magnification": "设备倍率",
+  "watt": "瓦数",
+  "adjust-power": "调整功率",
+  "last-collection": "最后采集时间",
+
+  "download": "下载",
+  "edit": "编辑",
+
+  "edit-device-info": "编辑设备信息",
+
+  "CaYo-New-Material": "锴越新材料",
+  "Digital-meter-reading-system": "数字化抄表系统"
+}

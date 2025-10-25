@@ -1,6 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useTranslation } from "react-i18next";
+
+type DeviceData = {
+  ID: string;
+  Name: string;
+  Magnification: number;
+  Watt: number;
+  LatestUpdate: string;
+};
 
 export default function Homepage() {
   const homePageDomRef = React.useRef<HTMLDivElement>(null);
@@ -12,44 +20,38 @@ export default function Homepage() {
     t("watt"),
     t("adjust-power"),
     t("last-collection"),
-  ]; // Specify your CSV headers here
-  const testData = [
-    {
-      name: "Test Device",
-      magnification: "10x",
-      watt: "100W",
-      adjustPower: "5W",
-      lastCollection: "2024-06-01 12:00:00",
-    },
-    {
-      name: "Sample Device",
-      magnification: "20x",
-      watt: "200W",
-      adjustPower: "10W",
-      lastCollection: "2024-06-01 13:00:00",
-    },
-    {
-      name: "Demo Device",
-      magnification: "15x",
-      watt: "150W",
-      adjustPower: "7W",
-      lastCollection: "2024-06-01 14:00:00",
-    },
   ];
+  var [csvDatas, setCsvDatas] = React.useState([] as DeviceData[]);
+
+  useEffect(() => {
+    updateData();
+    const interval = setInterval(() => {
+      updateData();
+    }, 20000); // Update every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
 
   function updateData() {
-
+    fetch("/api/power", {
+      method: "GET",
+    }).then((res) => {
+      res.json().then((data) => {
+        console.log(data);
+        setCsvDatas(data);
+      });
+    });
   }
 
   function handleDownload() {
     const csvString = [
       csvColumns,
-      ...testData.map((item) => [
-        item.name,
-        item.magnification,
-        item.watt,
-        item.adjustPower,
-        item.lastCollection,
+      ...csvDatas.map((item) => [
+        item.Name,
+        item.Magnification,
+        item.Watt,
+        item.Watt * item.Magnification,
+        item.LatestUpdate,
       ]),
     ]
       .map((row) => row.join(","))
@@ -118,16 +120,21 @@ export default function Homepage() {
           </tr>
         </thead>
         <tbody>
-          {testData.map((device, index) => (
+          {csvDatas.map((device, index) => (
             <tr key={index}>
               <td>
                 <input type="checkbox" onChange={handleCheckboxChange} />
               </td>
-              <td>{device.name}</td>
-              <td>{device.magnification}</td>
-              <td>{device.watt}</td>
-              <td>{device.adjustPower}</td>
-              <td>{device.lastCollection}</td>
+              <td>{device.Name}</td>
+              <td>{device.Magnification}</td>
+              <td>{device.Watt}</td>
+              <td>{device.Watt * device.Magnification}</td>
+              <td>
+                {new Date(Date.parse(device.LatestUpdate))
+                  .toISOString()
+                  .replace("T", " ")
+                  .substring(0, 19)}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -14,8 +14,8 @@ import (
 type dUnit struct {
 	DeviceID        string    `json:"ID"`
 	Name            string    `json:"Name"`
-	Multiply        int       `json:"Multiply"`
-	RawEnergyRecord float32   `json:"RawEnergyRecord"`
+	Magnification   int       `json:"Magnification"`
+	RawEnergyRecord float32   `json:"Watt"`
 	LatestUpdate    time.Time `json:"LatestUpdate"`
 }
 
@@ -41,7 +41,7 @@ func _CombinedEnergy() (data []dUnit) {
 			newData.DeviceID = result.Record().Measurement()
 			meterDevice, _ := manager.YamlMeterDevice(newData.DeviceID)
 			newData.Name = meterDevice.Name
-			newData.Multiply = meterDevice.MultiPower
+			newData.Magnification = meterDevice.MultiPower
 			newData.LatestUpdate = result.Record().Time()
 
 			value := result.Record().Value()

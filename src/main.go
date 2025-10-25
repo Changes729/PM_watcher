@@ -27,10 +27,10 @@ func main() {
 	api.DeviceSubRouter(r.PathPrefix("/api/").Subrouter())
 	api.PowerSubRouter(r.PathPrefix("/api/").Subrouter())
 
-	web := http.FileServer(http.Dir("./web/"))
+	web := http.FileServer(http.Dir("./public/"))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := os.Stat("./web" + r.URL.Path); os.IsNotExist(err) {
-			http.ServeFile(w, r, "./web/index.html")
+		if _, err := os.Stat("./public" + r.URL.Path); os.IsNotExist(err) {
+			http.ServeFile(w, r, "./public/index.html")
 		} else {
 			web.ServeHTTP(w, r)
 		}

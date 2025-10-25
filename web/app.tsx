@@ -37,6 +37,43 @@ window.onload = () => {
 
       ns: ["common"],
       defaultNS: "common",
+      keySeparator: ".",
+      parseMissingKeyHandler: (key: string) => {
+        const parts = key.split(".");
+
+        // Handle special cases for objects and audio
+        if (parts[0] === "object" || parts[0] === "audio") {
+          return (
+            parts[1]
+              ?.split("_")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ") || key
+          );
+        }
+
+        // For nested keys, try to make them more readable
+        if (parts.length > 1) {
+          const lastPart = parts[parts.length - 1];
+          return lastPart
+            .split("_")
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
+        }
+
+        // For single keys, just smart-capitalize and format
+        return key
+          .split("_")
+          .map(
+            (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ");
+      },
     });
 
   let node = document.createElement("div");

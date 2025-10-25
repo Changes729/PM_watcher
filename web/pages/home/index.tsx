@@ -14,6 +14,7 @@ export default function Homepage() {
   const tableBodyRef = React.useRef<HTMLTableSectionElement>(null);
   const headerCheckboxRef = React.useRef<HTMLInputElement>(null);
   const downloadButtonRef = React.useRef<HTMLButtonElement>(null);
+  const saveDeviceInfoRef = React.useRef<HTMLButtonElement>(null);
   const { t } = useTranslation();
   const csvColumns = [
     t("device-name"),
@@ -109,7 +110,38 @@ export default function Homepage() {
     downloadButtonRef.current!.disabled = allDischecked;
   }
 
+  function handleSaveDeviceInfo() {
+    let userChoice = confirm(t("message.save-info-confirm"));
+    if (!userChoice) {
+      return;
+    }
 
+    const deviceNames = tableBodyRef.current?.querySelectorAll(
+      "tr"
+    ) as NodeListOf<HTMLTableRowElement>;
+    deviceNames.forEach((deviceName, index) => {
+      csvDatas[index].Name = deviceName.cells[1].innerText;
+      csvDatas[index].Magnification = parseInt(deviceName.cells[2].innerText);
+    });
+
+    fetch("/api/device-info", {
+      method: "POST", // Specify the HTTP method as POST
+      headers: {
+        "Content-Type": "application/json", // Indicate that the body is JSON
+      },
+      body: JSON.stringify(csvDatas), // Convert the JavaScript object to a JSON string
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } else {
+        setCsvDatas([...csvDatas]);
+      }
+    });
+  }
+
+  function onInfoChanged() {
+    saveDeviceInfoRef.current!.disabled = false;
+  }
 
   return (
     <>
@@ -122,7 +154,13 @@ export default function Homepage() {
       >
         {t("download")}
       </button>
-      <button>{t("edit-device-info")}</button>
+      <button
+        onClick={handleSaveDeviceInfo}
+        ref={saveDeviceInfoRef}
+        disabled={true}
+      >
+        {t("save-device-info")}
+      </button>
       <table>
         <thead>
           <tr>
@@ -151,8 +189,12 @@ export default function Homepage() {
                   onChange={handleCheckboxChange}
                 />
               </td>
-              <td>{device.Name}</td>
-              <td>{device.Magnification}</td>
+              <td contentEditable="true" onChange={onInfoChanged}>
+                {device.Name}
+              </td>
+              <td contentEditable="true" onChange={onInfoChanged}>
+                {device.Magnification}
+              </td>
               <td>{device.Watt}</td>
               <td>{device.Watt * device.Magnification}</td>
               <td>

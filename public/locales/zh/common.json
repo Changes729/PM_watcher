@@ -8,8 +8,11 @@
   "download": "下载",
   "edit": "编辑",
 
-  "edit-device-info": "编辑设备信息",
+  "save-device-info": "保存设备信息",
 
-  "CaYo-New-Material": "锴越新材料",
-  "Digital-meter-reading-system": "数字化抄表系统"
+  "Digital-meter-reading-system": "数字化抄表系统",
+
+  "message": {
+    "save-info-confirm": "===警告===\n您确定要保存设备信息吗?\n此操作不可逆转。"
+  }
 }

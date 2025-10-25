@@ -21,6 +21,7 @@ type dUnit struct {
 
 func PowerSubRouter(r *mux.Router) {
 	r.HandleFunc("/power", GetCombinedEnergy).Methods("GET")
+	r.HandleFunc("/device-info", UpdateDeviceInfos).Methods("POST")
 }
 
 func _CombinedEnergy() (data []dUnit) {
@@ -61,4 +62,33 @@ func _CombinedEnergy() (data []dUnit) {
 func GetCombinedEnergy(w http.ResponseWriter, r *http.Request) {
 	str, _ := json.Marshal(_CombinedEnergy())
 	w.Write(str)
+}
+
+func UpdateDeviceInfos(w http.ResponseWriter, r *http.Request) {
+	var newDevices []dUnit
+	err := json.NewDecoder(r.Body).Decode(&newDevices)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Decode body failed: %v", err))
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	slog.Debug(fmt.Sprintf("New devices: %v", newDevices))
+
+	config := manager.YamlInfo
+	for _, device := range newDevices {
+		config.MeterDevice[device.DeviceID] = manager.MeterDevice{
+			MultiPower: device.Magnification,
+			Name:       device.Name,
+		}
+	}
+	err = manager.SaveConfig(config)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Save config failed: %v", err))
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	manager.ReadConfig()
+
+	w.WriteHeader(http.StatusOK)
 }

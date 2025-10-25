@@ -11,9 +11,7 @@ import (
 const _FILE_NAME = "./pm-conf.yaml"
 
 type IPDevice struct {
-	IP         string `yaml:"ip"`
-	Tags       string `yaml:"tags"`
-	MultiPower int    `yaml:"multi-power"`
+	LatestID string `yaml:"latest-id"`
 }
 
 type InfluxSettings struct {
@@ -27,10 +25,16 @@ type Frequency struct {
 	IntervalPower int `yaml:"power"`
 }
 
+type MeterDevice struct {
+	MultiPower int    `yaml:"multi-power"`
+	Name       string `yaml:"name"`
+}
+
 type YamlConfig struct {
-	Frequency     Frequency           `yaml:"frequency"`
-	InfluxSetting InfluxSettings      `yaml:"influxDB"`
-	IPDevice      map[string]IPDevice `yaml:"ip-device"`
+	Frequency     Frequency              `yaml:"frequency"`
+	InfluxSetting InfluxSettings         `yaml:"influxDB"`
+	IPDevice      map[string]IPDevice    `yaml:"ip-device"`
+	MeterDevice   map[string]MeterDevice `yaml:"meter-device"`
 }
 
 var YamlInfo YamlConfig
@@ -46,12 +50,17 @@ func YamlInit() {
 }
 
 func YamlIPDevices() (devices []string) {
-	for _, deviceInfo := range YamlInfo.IPDevice {
-		devices = append(devices, deviceInfo.IP)
+	for k := range YamlInfo.IPDevice {
+		devices = append(devices, k)
 	}
 
 	slog.Debug(fmt.Sprintf("Devices: %v", devices))
 
+	return
+}
+
+func YamlMeterDevice(id string) (device MeterDevice, ok bool) {
+	device, ok = YamlInfo.MeterDevice[id]
 	return
 }
 

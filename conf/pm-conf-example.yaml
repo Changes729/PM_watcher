@@ -4,6 +4,11 @@ influxDB:
   bucket: power
   org: some_org
 
+meter-device:
+  AA591820014222:
+    multi-power: 60
+    name: 3#1L 侧边？
+
 ip-device:
   device_1:
     ip: 192.168.1.1

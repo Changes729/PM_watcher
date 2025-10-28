@@ -29,7 +29,7 @@ func _CombinedEnergy() (data []dUnit) {
 	|> range(start: 0)
 	|> filter(fn: (r) => r._field == "combined_power")
 	|> filter(fn: (r) => r.source == "meter")
-	|> first()`)
+	|> last()`)
 	result, err := manager.QueryBucket(formattedCmd)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Request data failed: %v", err))
@@ -37,13 +37,14 @@ func _CombinedEnergy() (data []dUnit) {
 		slog.Error(fmt.Sprintf("query parsing error: %s\n", result.Err().Error()))
 	} else {
 		// Iterate over query response
-		newData := dUnit{}
+		loc, _ := time.LoadLocation("Asia/Shanghai")
 		for result.Next() {
+			newData := dUnit{}
 			newData.DeviceID = result.Record().Measurement()
 			meterDevice, _ := manager.YamlMeterDevice(newData.DeviceID)
 			newData.Name = meterDevice.Name
 			newData.Magnification = meterDevice.MultiPower
-			newData.LatestUpdate = result.Record().Time()
+			newData.LatestUpdate = result.Record().Time().In(loc)
 
 			value := result.Record().Value()
 			switch v := value.(type) {
@@ -51,8 +52,8 @@ func _CombinedEnergy() (data []dUnit) {
 				newData.RawEnergyRecord = float32(v)
 			default:
 			}
+			data = append(data, newData)
 		}
-		data = append(data, newData)
 	}
 
 	slog.Debug(fmt.Sprintf("data: %v", data))

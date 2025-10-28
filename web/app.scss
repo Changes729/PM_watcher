@@ -23,6 +23,14 @@ td {
   padding: 8px 10px;
 }
 
+td {
+  text-align: right;
+}
+
+td:nth-of-type(2) {
+  text-align: left;
+}
+
 td:last-of-type {
   text-align: center;
 }

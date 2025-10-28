@@ -58,8 +58,8 @@ export default function Homepage() {
           device.Magnification.toString(),
           device.Watt.toString(),
           (device.Watt * device.Magnification).toString(),
-          new Date(Date.parse(device.LatestUpdate))
-            .toISOString()
+          new Date(device.LatestUpdate)
+            .toLocaleString('sv')
             .replace("T", " ")
             .substring(0, 19),
         ]);
@@ -157,7 +157,7 @@ export default function Homepage() {
       <button
         onClick={handleSaveDeviceInfo}
         ref={saveDeviceInfoRef}
-        disabled={true}
+        disabled={false}
       >
         {t("save-device-info")}
       </button>
@@ -196,10 +196,10 @@ export default function Homepage() {
                 {device.Magnification}
               </td>
               <td>{device.Watt}</td>
-              <td>{device.Watt * device.Magnification}</td>
+              <td>{(device.Watt * device.Magnification).toFixed(2)}</td>
               <td>
                 {new Date(Date.parse(device.LatestUpdate))
-                  .toISOString()
+                  .toLocaleString('sv')
                   .replace("T", " ")
                   .substring(0, 19)}
               </td>

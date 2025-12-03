@@ -24,12 +24,24 @@ func PowerSubRouter(r *mux.Router) {
 	r.HandleFunc("/device-info", UpdateDeviceInfos).Methods("POST")
 }
 
-func _CombinedEnergy() (data []dUnit) {
+func _CombinedEnergy(datetimeStop string) (data []dUnit) {
+	req_range := "range(start: 0)"
+	if datetimeStop == "" {
+		/** noting changed. */
+	} else {
+		datetime, err := time.Parse(time.RFC3339, datetimeStop)
+		if err != nil {
+			slog.Error(fmt.Sprintf("request param %s is incorrect, please send with RFC3339", datetimeStop))
+		} else {
+			req_range = fmt.Sprintf("range(stop: %s)", datetime.String())
+		}
+	}
+
 	formattedCmd := fmt.Sprintf(`
-	|> range(start: 0)
+	|> %s
 	|> filter(fn: (r) => r._field == "combined_power")
 	|> filter(fn: (r) => r.source == "meter")
-	|> last()`)
+	|> last()`, req_range)
 	result, err := manager.QueryBucket(formattedCmd)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Request data failed: %v", err))
@@ -61,7 +73,7 @@ func _CombinedEnergy() (data []dUnit) {
 }
 
 func GetCombinedEnergy(w http.ResponseWriter, r *http.Request) {
-	str, _ := json.Marshal(_CombinedEnergy())
+	str, _ := json.Marshal(_CombinedEnergy(r.URL.Query().Get("restrictDatetime")))
 	w.Write(str)
 }
 

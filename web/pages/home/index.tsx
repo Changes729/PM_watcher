@@ -11,6 +11,7 @@ type DeviceData = {
 };
 
 export default function Homepage() {
+  const datetimeRef = React.useRef<HTMLInputElement>(null);
   const tableBodyRef = React.useRef<HTMLTableSectionElement>(null);
   const headerCheckboxRef = React.useRef<HTMLInputElement>(null);
   const downloadButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -28,14 +29,25 @@ export default function Homepage() {
   useEffect(() => {
     updateData();
     const interval = setInterval(() => {
-      updateData();
+      const datetime: string = datetimeRef.current!.value;
+      if (datetime.trim().length == 0) {
+        updateData();
+      }
     }, 20000);
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
   function updateData() {
-    fetch("/api/power", {
+    const datetime: string = datetimeRef.current!.value;
+    var params = new URLSearchParams(
+      datetime.trim().length
+        ? {
+            restrictDatetime: new Date(datetime).toISOString(),
+          }
+        : {}
+    );
+    fetch(`/api/power?${params}`, {
       method: "GET",
     }).then((res) => {
       res.json().then((data) => {
@@ -59,7 +71,7 @@ export default function Homepage() {
           device.Watt.toString(),
           (device.Watt * device.Magnification).toString(),
           new Date(device.LatestUpdate)
-            .toLocaleString('sv')
+            .toLocaleString("sv")
             .replace("T", " ")
             .substring(0, 19),
         ]);
@@ -143,6 +155,10 @@ export default function Homepage() {
     saveDeviceInfoRef.current!.disabled = false;
   }
 
+  function onDatetimeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    updateData();
+  }
+
   return (
     <>
       <img src="http://skinspath.acshoes.com/SkinsPath1/201708/7d2688a7-9550-415b-859b-408dd06b853c/Skins/zh-CN/Website/Images/logo.png"></img>
@@ -161,6 +177,11 @@ export default function Homepage() {
       >
         {t("save-device-info")}
       </button>
+      <input
+        type="datetime-local"
+        ref={datetimeRef}
+        onChange={onDatetimeChange}
+      />
       <table>
         <thead>
           <tr>
@@ -199,7 +220,7 @@ export default function Homepage() {
               <td>{(device.Watt * device.Magnification).toFixed(2)}</td>
               <td>
                 {new Date(Date.parse(device.LatestUpdate))
-                  .toLocaleString('sv')
+                  .toLocaleString("sv")
                   .replace("T", " ")
                   .substring(0, 19)}
               </td>

@@ -35,6 +35,7 @@ type YamlConfig struct {
 	InfluxSetting InfluxSettings         `yaml:"influxDB"`
 	IPDevice      map[string]IPDevice    `yaml:"ip-device"`
 	MeterDevice   map[string]MeterDevice `yaml:"meter-device"`
+	CROSSupport   bool                   `yaml:"cros"`
 }
 
 var YamlInfo YamlConfig

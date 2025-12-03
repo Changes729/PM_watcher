@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -36,5 +37,9 @@ func main() {
 		}
 	})
 
-	http.ListenAndServe(":8080", r)
+	if manager.YamlInfo.CROSSupport {
+		http.ListenAndServe(":8080", handlers.CORS()(r))
+	} else {
+		http.ListenAndServe(":8080", r)
+	}
 }

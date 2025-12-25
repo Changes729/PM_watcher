@@ -79,8 +79,11 @@ export default function Homepage() {
     });
 
     const csvString = csvDataPatch.map((row) => row.join(",")).join("\n");
+    const datetime: string = datetimeRef.current!.value;
 
-    const currentDate = new Date();
+    const currentDate = datetime.trim().length
+      ? new Date(datetime)
+      : new Date();
     const formattedDate = `${currentDate.getFullYear()}-${String(
       currentDate.getMonth() + 1
     ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(
